@@ -31,4 +31,4 @@ Case #2. You want to curve an already flat G-code, which probably come from the 
   * Negative radius will curve the part in the -Z direction.
   * *The part will always be curved by starting from the first layer, so you might want to slice your flattened G-code with a +Z offset if you choose to curve your G-code in the -Z direction. **Otherwise, the part will collision the printing bed and you might damage your printer**.
   
-**/!\ Always re-import your curved G-code into Simplify3D to verify the resulting G-code /!\**
+**Always re-import your curved G-code into Simplify3D to verify the resulting G-code !**
