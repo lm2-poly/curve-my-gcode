@@ -37,6 +37,6 @@ Case #2 : You want to curve an already flat G-code, which probably comes from th
 
 ## Limitations / to-do
 `Step01_main_flatten.m` 
-* Curently only able to import ASCII STL format. I cannot read Binary STL format.
-* Only flattens around the Y axis.
+* Is only able to import ASCII STL format. It cannot read Binary STL format.
+* Only flattens around the Y axis. So you need to position your datum reference system accordingly before exporting the STL from your CAD software.
 * Only calculates positif radius (downward curvature will be flatten torward the -Z direction, so it will be curved even more!)
