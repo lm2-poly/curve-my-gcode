@@ -7,6 +7,7 @@ function status = lire(fid,masque,debug)
 % Output: status (true/false) Ligne identique au masque
 % ==================================================
   ligne=fgetl(fid);        % Lecture d'une ligne dans le fichier
+  ligne=strtrim(ligne);
   status=true;
   if strcmp(ligne,masque)
     s =[masque,' -> OK'];

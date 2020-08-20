@@ -8,6 +8,7 @@ function vecteur = lireXYZ(fid,masque,debug)
 %         vecteur zéro s'il y a une erreur
 % ==================================================
   ligne=fgetl(fid);        % Lecture d'une ligne dans le fichier
+  ligne=strtrim(ligne);
   [n,m]=size(ligne);
   [o,n]=size(masque);      % Nombre de caractère dans le masque
   ligne1=ligne(1:n);       % Partie 1 doit être identique au masque
@@ -16,6 +17,9 @@ function vecteur = lireXYZ(fid,masque,debug)
 	s=[masque,' -> OK'];
     vecteur=str2num(ligne2);
   else
+    if strcmp(masque,'endsolid')
+        throw(EOF_exception)
+    end
     s=[masque,' -> Not OK'];  
     vecteur=[0, 0, 0];     % Un vecteur zéro indique une erreur
   end

@@ -3,16 +3,22 @@ function [f,v,n]=lire_STL(fid,debug)
 % Lecture d'un fichier STL produit par CATIA
 % ==================================================
   solid_on  = 'solid CATIA STL';
-  facet_on  = '  facet normal';
-  facet_off = '  endfacet';
-  loop_on   = '    outer loop';
-  loop_off  = '    endloop';
-  vertex_on = '      vertex';
+  facet_on  = 'facet normal';
+  facet_off = 'endfacet';
+  loop_on   = 'outer loop';
+  loop_off  = 'endloop';
+  vertex_on = 'vertex';
 
+  errID = 'lireXYZ:EOF';
+  msg = 'End of STL has been reached';
+  global EOF_exception
+  EOF_exception = MException(errID,msg);  
+  
   i=1; j=1;
   %disp('Fonction: lire_STL()     Version 1.0');
   if lire(fid,solid_on,debug)
     normal(i,:)=lireXYZ(fid,facet_on,debug);
+    disp('first line')
     while (normal(i,:)*normal(i,:)')~=0
       lire(fid,loop_on,debug);          
       vertex(j  ,:)=lireXYZ(fid,vertex_on,debug);
@@ -22,7 +28,11 @@ function [f,v,n]=lire_STL(fid,debug)
       lire(fid,loop_off,debug);       
       lire(fid,facet_off,debug);
       i=i+1;
-      normal(i,:)=lireXYZ(fid,facet_on,debug);
+      try
+        normal(i,:)=lireXYZ(fid,facet_on,debug);
+      catch EOF_exception
+        break % end of file
+      end
     end
     if debug
       disp('endsolid CATIA STL -> OK');
