@@ -1,0 +1,7 @@
+272.802
+238.06
+40.00
+
+// The radius used for computation is 272.802. Here, we scaled down the part to 60% of it's original size (part too big)
+// this way, the computation radius is 60% of 454.67 = 272.802. The original radius is kept as reference :
+454.67
