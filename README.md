@@ -12,15 +12,19 @@ G. Zhao, G. Ma, J. Feng, and W. Xiao, “Nonplanar slicing and path generation m
 ## Basic usage
 There are two ways to use this code: 
 
-Case #1 : You have modeled a curved part in a CAD software and you want to print it according to it's base radius (the base radius is the biggest radius of the part, generally located at the part's base, which will be laying on top of the printing bed, i.e. the *first layer radius*). You just closed your favorite CAD software and basically have not sliced any G-code yet. *For this case, go to Step 1*
-
-or
+Case #1 : You have modeled a curved part in a CAD software and you want to print it according to it's base radius (the base radius is the biggest radius of the part, generally located at the part's base, which will be laying on top of the printing bed, i.e. the *first layer radius*). You just closed Catia and basically have not sliced any G-code yet. *For this case, go to Step 1*
+Notes on the source 3D model:
+* The STL origin must be under the part. The curvature of the part must be around the X and/or Y axis.
+![Reference Frame example](/examples/ReferenceFrame.PNG)
 
 Case #2 : You want to curve an already flat G-code, which probably comes from the slicing of a flat part. *For this case, go to Step 2*
 
 **Step 1 : Obtain a flat G-code**
-* Before running the Matlab code, you need to have modeled a part which contains a certain curved surface that you want to print according to the base radius (radius at the part's base or first layer radius) and have exported the .STL file, ready for import in Simplify3D.
-* Instead of rushing directly into Simplify3D, run script `Step01_main_flatten.m` to flatten the STL according to the base radius. Follow the console instructions. You will obtain a flat STL of your part.
+* Before running the Matlab code, you need to have modeled a part which contains a certain curved surface that you want to print according to the base radius (radius at the part's base or first layer radius) and have exported the .STL file in **ASCII format**, ready for import in Simplify3D. A .STL file in binary format will not work with the Matlab code.
+* Instead of rushing directly into Simplify3D, run script "Step01_main_flatten.m" to flatten the STL according to the base radius. Follow the console instructions. You will obtain a flat STL of your part.
+* Import your flat part in Simplify3D. 
+	If using the Fanuc Robot, position the part flat on the print bed centered along the X and Y axis. 
+	If using the Gantry Aerotech, position the part flat on the print bed at the origin (X=0 and Y=0)
 * Slice your flatten part in Simplify3D as you would usually do in order to obtain a G-code file. The G-code will be a flat G-code and you will find yourself in Case #2. Go to Step 2 to continue.
 
 **Step 2 : Curve a flat G-code**

@@ -84,8 +84,8 @@ DIM_AON = [450, 425, 620]; % X & Y bed dimensions [mm] for the AON
 OFFSET_AON = [DIM_AON(1)/2, DIM_AON(2)/2, 0];
 
 % Parameters for the Aerotech Gantry
-DIM_AEROG = [200, 200, 200]; % X & Y bed dimensions [mm] for the Aerotech Gantry AS SET UP IN SIMPLIFY 3D slicing profile
-OFFSET_AEROG = [DIM_AEROG(1)/2, DIM_AEROG(2)/2, 0]; % Offset for printing a curved surface with the Aerotech gantry
+DIM_AEROG = [200, 200, 200]; % X & Y bed dimensions [mm] for the Aerotech Gantry AS SET UP IN SIMPLIFY 3D slicing profi
+OFFSET_AEROG = [0, 0, 0]; % Offset for printing a curved surface with the Aerotech gantry
 
 % Initialisation of printers offset and dim
 if strcmpi(printerInput, '1')
@@ -112,4 +112,5 @@ tic;
 fprintf('Reading %s...\n', [nom_fic_in '.gcode']);
 gCodeProcess(nom_fic_in,fid,dist_res,R,offset,curve_mode,layer_ajustment);
 t=toc;
+fclose('all');
 fprintf('Total process time : %.2f s\n',t);
