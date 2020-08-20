@@ -16,12 +16,12 @@ or
 
 Case #2. You want to curve an already flat G-code, which probably come from the slicing of a flat part. *For this case, go to Step 2*
 
-###**Step 1 : Obtain a flat G-code**
+**Step 1 : Obtain a flat G-code**
 * Before running the Matlab code, you need to have modeled a part which contains a certain curved surface that you want to print according to the base radius (radius at the part's base or first layer radius) and have exported the .STL file, ready for import in Simplify3D.
 * Run script "Step01_main_flatten.m" to flatten the STL according to the base radius. Follow the console instructions.
 * Slice your flatten part in Simplify3D as you would usually do in order to obtain a G-code file. The G-code will be a flat G-code and you will find yourself in Case #2. Go to Step 2 to continue.
 
-###**Step 2 : Curve a flat G-code**
+**Step 2 : Curve a flat G-code**
 * At this point, you have a flat G-code file.
 * Run script "Step02_main_curve.m" to curve the G-code according to a given radius. Follow the console instructions.
   * If you did Step 1 before Step 2, you can specify that you already flattened an STL prior to generating the G-code so that you don't have to calculate the base radius by yourself.
