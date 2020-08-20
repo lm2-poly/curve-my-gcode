@@ -2,19 +2,21 @@
 A Matlab script to curve a planar G-code around an axis with a given radius.
 
 Author : Jean-François Chauvette
+
 jean-francois.chauvette@polymtl.ca
 
 inspired and adapted from : 
+
 G. Zhao, G. Ma, J. Feng, and W. Xiao, “Nonplanar slicing and path generation methods for robotic additive manufacturing,” The International Journal of Advanced Manufacturing Technology, vol. 96, no. 9–12, pp. 3149–3159, Jun. 2018, doi: 10.1007/s00170-018-1772-9.
 
 ## Basic usage
 There are two ways to use this code: 
 
-Case #1. You have modeled a curved part in a CAD software and you want to print it according to it's base radius (the base radius is the biggest radius of the part, generally located at the part's base, which will be laying on top of the printing bed, i.e. the *first layer radius*). You just closed Catia and basically have not sliced any G-code yet. *For this case, go to Step 1*
+Case #1 : You have modeled a curved part in a CAD software and you want to print it according to it's base radius (the base radius is the biggest radius of the part, generally located at the part's base, which will be laying on top of the printing bed, i.e. the *first layer radius*). You just closed Catia and basically have not sliced any G-code yet. *For this case, go to Step 1*
 
 or
 
-Case #2. You want to curve an already flat G-code, which probably come from the slicing of a flat part. *For this case, go to Step 2*
+Case #2 : You want to curve an already flat G-code, which probably come from the slicing of a flat part. *For this case, go to Step 2*
 
 **Step 1 : Obtain a flat G-code**
 * Before running the Matlab code, you need to have modeled a part which contains a certain curved surface that you want to print according to the base radius (radius at the part's base or first layer radius) and have exported the .STL file, ready for import in Simplify3D.
