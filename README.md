@@ -13,6 +13,7 @@ G. Zhao, G. Ma, J. Feng, and W. Xiao, “Nonplanar slicing and path generation m
 There are two ways to use this code: 
 
 Case #1 : You have modeled a curved part in a CAD software and you want to print it according to it's base radius (the base radius is the biggest radius of the part, generally located at the part's base, which will be laying on top of the printing bed, i.e. the *first layer radius*). You just closed your favorite CAD software and basically have not sliced any G-code yet. *For this case, go to Step 1*
+
 Notes on the source 3D model:
 * The STL origin must be under the part. The curvature of the part must be around the X and/or Y axis.
 ![Reference Frame example](/examples/ReferenceFrame.PNG)
