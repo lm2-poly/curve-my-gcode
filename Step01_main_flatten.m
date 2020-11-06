@@ -45,6 +45,7 @@ idB = nearestNeighbor(obj,[(min(v(:,1)) + max(v(:,1)))/2 0 0]);
 idC = nearestNeighbor(obj,[max(v(:,1)) 0 0]);
 pt = [v(idA,1),v(idA,3); v(idB,1),v(idB,3); v(idC,1),v(idC,3)];
 R = heron(pt);
+fprintf('Radius is %.2f mm\n', R);
 
 % Flattening
 % R = input('Specify the radius of the first layer (same unit as STL) : ');

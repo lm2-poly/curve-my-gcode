@@ -1,6 +1,6 @@
-function gCodeProcess(nom_fic_in, raw_gcode_file, dist_res, R, offset, curve_mode, layer_ajustment)
+function gCodeProcess(nom_fic_in, raw_gcode_file, dist_res, R, offset, print_normals, curve_mode, layer_ajustment)
 % gCodeProcess
-% Last updated : 2020-08-19
+% Last updated : 2020-09-08
 %
 % Description : This function reads a G-code file, interpolates points
 % between the coordinates following the resolution given by the variable
@@ -17,6 +17,8 @@ function gCodeProcess(nom_fic_in, raw_gcode_file, dist_res, R, offset, curve_mod
 %       dist_res : the interpolation resolution between two points.
 %       R : the first layer radius used to curve the path.
 %       offset : the path's offset needed for the curving operation.
+%       print_normals : (0 or 1) will be set to 1 for the Fanuc in order to
+%           output the normal vectors to the surface.
 %       curve_mode : (0, 1 or 2) the curving mode to use in curveXYZ().
 %       layer_ajustment : the adjustment to be done to layer 1 to take the
 %           first layer height into account
@@ -35,10 +37,16 @@ current_mode = NaN;
 % Initialize variables
 current_layer = 0;
 current_pos = [0,0,0];
+current_norm = [0,0,0];
 last_linear = [];
 last_curved = [];
 current_extr = 0;
 current_fdrt = 0;
+if print_normals % The columns position of extrusion and speed
+    dPosEF = 3; % 3 index further if normals will be printed
+else
+    dPosEF = 0;
+end
 subTotExtrLine = 0;
 subTotExtrCurv = 0;
 resetExtr = 0;    
@@ -67,27 +75,35 @@ while ~feof(raw_gcode_file)
     end
     
     % Check if its an instruction line
-    if tline(1) == 'G' && current_layer && ~contains(tline,'G92')
+    if ~isempty(tline) && tline(1) == 'G' && ~contains(tline,'G92')% && current_layer
         tline = tline(1:end);
         splitLine = strsplit(tline,' ');
         for i = 1:length(splitLine)
-            % Check what the command is (only the main ones are implemented
-            % i.e. G0 - G1)
-            if strcmp(splitLine{i}, 'G0')
-                current_mode = rapid_positioning;
-            elseif strcmp(splitLine{i}, 'G1')
-                current_mode = linear_interpolation;
-            else
-                if splitLine{i}(1) == 'X'     % X coordinate
-                    current_pos(1) = str2double(splitLine{i}(2:end));
-                elseif splitLine{i}(1) == 'Y' % Y coordinate
-                    current_pos(2) = str2double(splitLine{i}(2:end));
-                elseif splitLine{i}(1) == 'Z' % Z coordinate
-                    current_pos(3) = str2double(splitLine{i}(2:end));
-                elseif splitLine{i}(1) == 'E' % Extrusion rate
-                    current_extr = str2double(splitLine{i}(2:end));
-                elseif splitLine{i}(1) == 'F' % Feed rate
-                    current_fdrt = str2double(splitLine{i}(2:end));
+            if ~isempty(splitLine{i})
+                % Check what the command is (only the main ones are implemented
+                % i.e. G0 - G1)
+                if strcmp(splitLine{i}, 'G0')
+                    current_mode = rapid_positioning;
+                elseif strcmp(splitLine{i}, 'G1')
+                    current_mode = linear_interpolation;
+                else
+                    if splitLine{i}(1) == 'X'     % X coordinate
+                        current_pos(1) = str2double(splitLine{i}(2:end));
+                    elseif splitLine{i}(1) == 'Y' % Y coordinate
+                        current_pos(2) = str2double(splitLine{i}(2:end));
+                    elseif splitLine{i}(1) == 'Z' % Z coordinate
+                        current_pos(3) = str2double(splitLine{i}(2:end));
+                    elseif splitLine{i}(1) == 'I' % i normal component
+                        current_norm(1) = str2double(splitLine{i}(2:end));
+                    elseif splitLine{i}(1) == 'J' % j normal component
+                        current_norm(2) = str2double(splitLine{i}(2:end));
+                    elseif splitLine{i}(1) == 'K' % k normal component
+                        current_norm(3) = str2double(splitLine{i}(2:end));
+                    elseif splitLine{i}(1) == 'E' % Extrusion rate
+                        current_extr = str2double(splitLine{i}(2:end));
+                    elseif splitLine{i}(1) == 'F' % Feed rate
+                        current_fdrt = str2double(splitLine{i}(2:end));
+                    end
                 end
             end
             % If G0, G1 have no coordinates but only E or F, the
@@ -117,14 +133,16 @@ while ~feof(raw_gcode_file)
                     dire = (current_pos - last_linear(1:3))/dist;
                     interp_pos = last_linear(1:3) + dire.*(0:dist_res:dist)';
                     interp_pos = [interp_pos(2:end,:); current_pos];
-                    if size(interp_pos, 1)>1 && all(interp_pos(end,:) == interp_pos(end-1,:)) % If points are repeating themselves, remove the double
+                    
+                    % If points are repeating themselves, remove the double
+                    if size(interp_pos, 1)>1 && all(interp_pos(end,:) == interp_pos(end-1,:)) 
                         interp_pos = interp_pos(1:end-1,:);
                     end
                     
-                    % Extrusion value
+                    % Extrusion value interpolation array
                     interp_extr = [zeros(size(interp_pos,1)-1,1); current_extr];
                     
-                    % Feedrate value
+                    % Feedrate value interpolation array
                     interp_fdrt = [current_fdrt; zeros(size(interp_pos,1)-1,1)];
                 end
             else
@@ -136,17 +154,46 @@ while ~feof(raw_gcode_file)
         % G-code reconstruction 
         if ~isnan(current_mode)
             nextCoord = interp_pos;
-            
+                        
             % Offsetting and curving the coordinates
-            nextCoord = [nextCoord(:,1)-offset(1) nextCoord(:,2)-offset(2) nextCoord(:,3)]; % Offset flatten path to slicer origin
+            nextCoord = [nextCoord(:,1)-offset(1) nextCoord(:,2)-offset(2) nextCoord(:,3)-offset(3)]; % Offset flatten path to slicer origin
             curvedCoord = curveXYZ(nextCoord,R,curve_mode); 
             
+            % Curving of normals for each position of the intepolated next coordinates
+            if print_normals
+                % If no current normal exists for the current coordinate,
+                % then create an array of normal for the current nextCoord
+                % array. Else, take the current_norm and interpolate it for
+                % all coordinates of current_norm
+                if all(current_norm == [0,0,0])
+                    % creating unitary vector in the vertical direction if no normals exist
+                    nextCoordNormals = [nextCoord(:,1) nextCoord(:,2) nextCoord(:,3)+1]; 
+                else   
+                    % Copying the already existing current normal to the other interpolated points
+                    tempNormsRepeated = repmat(current_norm,size(nextCoord,1),1);
+                    nextCoordNormals = [nextCoord(:,1) nextCoord(:,2) nextCoord(:,3)] + tempNormsRepeated;                    
+                end
+                AbsCurvedNorms = curveXYZ(nextCoordNormals,R,curve_mode);
+                curvedCoord(:,4:6) = [AbsCurvedNorms(:,1)-curvedCoord(:,1), AbsCurvedNorms(:,2)-curvedCoord(:,2), AbsCurvedNorms(:,3)-curvedCoord(:,3)];
+            end
+            
+            % Normals creation around Y axis
+%             if print_normals
+%                 curvedCoord(:,4:6) = [zeros(size(curvedCoord,1),1), zeros(size(curvedCoord,1),1), ones(size(curvedCoord,1),1)];
+%                 midCoord = [0, 0, R] .* ones(size(curvedCoord,1),3);
+%                 coord = [curvedCoord(:,1) zeros(size(curvedCoord,1),1) curvedCoord(:,3)];
+%                 normals = midCoord - coord;
+%                 for m = 1:size(curvedCoord,1)
+%                     curvedCoord(m,4:6) = normals(m,:)/norm(normals(m,:));
+%                 end
+%             end
+            
             % Repositionning of the coordinates
-            nextCoord = [nextCoord(:,1)+offset(1) nextCoord(:,2)+offset(2) nextCoord(:,3:end)]; % Offset flatten path to original position
-            curvedCoord = [curvedCoord(:,1)+offset(1) curvedCoord(:,2)+offset(2) curvedCoord(:,3:end)]; % Offset new path to original position         
+            nextCoord = [nextCoord(:,1)+offset(1) nextCoord(:,2)+offset(2) nextCoord(:,3:end)+offset(3)]; % Offset flatten path to original position
+            curvedCoord = [curvedCoord(:,1)+offset(1) curvedCoord(:,2)+offset(2) curvedCoord(:,3)+offset(3) curvedCoord(:,4:end)]; % Offset new path to original position         
             
             % First layer adjustment if needed (firstLayerOffset = 0 by default)
-            curvedCoord(:,3) = curvedCoord(:,3) + firstLayerOffset * ones(size(curvedCoord,1),1); 
+            curvedCoord(:,3) = curvedCoord(:,3) + firstLayerOffset * ones(size(curvedCoord,1),1);
                         
             % Extrusion adjustments
             nextCoord = [nextCoord, interp_extr];
@@ -177,12 +224,12 @@ while ~feof(raw_gcode_file)
                     subTotExtrLine = subTotExtrLine + delta; % New subtotal at the point for linear path
                     nextCoord(i,4) = subTotExtrLine;
                     subTotExtrCurv = subTotExtrCurv + delta * dDistCurv/dDistLine; % New subtotal at the point for curved path 
-                    curvedCoord(i,4) = subTotExtrCurv;
+                    curvedCoord(i,4+dPosEF) = subTotExtrCurv;
                 end
                 resetExtr = 0;   
             end
                         
-            % Setting the last curved coordinate 
+            % Add the coord to the path for plotting   
             last_curved = curvedCoord(end,:);
             
             % Reset values for computation 
@@ -197,11 +244,16 @@ while ~feof(raw_gcode_file)
                 gline = [gline ' X' sprintf('%.4f',curvedCoord(i,1))];%-offset(1))]; % X
                 gline = [gline ' Y' sprintf('%.4f',curvedCoord(i,2))];%-offset(2))]; % Y
                 gline = [gline ' Z' sprintf('%.4f',curvedCoord(i,3))];%+offset(3))]; % Z
-                if curvedCoord(i,4)>0
-                    gline = [gline ' E' sprintf('%.4f',curvedCoord(i,4))]; % E
+                if print_normals
+                    gline = [gline ' I' sprintf('%.4f',curvedCoord(i,4))]; % I
+                    gline = [gline ' J' sprintf('%.4f',curvedCoord(i,5))]; % J
+                    gline = [gline ' K' sprintf('%.4f',curvedCoord(i,6))]; % K
                 end
-                if curvedCoord(i,5)>0
-                    gline = [gline ' F' sprintf('%.0f',curvedCoord(i,5))]; % F
+                if curvedCoord(i,4+dPosEF)>0
+                    gline = [gline ' E' sprintf('%.4f',curvedCoord(i,4+dPosEF))]; % E
+                end
+                if curvedCoord(i,4+dPosEF+1)>0
+                    gline = [gline ' F' sprintf('%.0f',curvedCoord(i,4+dPosEF+1))]; % F
                 end
                 fprintf(fid_g, '%s\n', gline); % Prints the line into the new G-code file
             end
@@ -221,7 +273,7 @@ while ~feof(raw_gcode_file)
             fprintf('Reading %s\n',layerNum);
         end
         
-        % Layer 1 offset : in the rare occasion that the layer is distanced
+        % Layer 1 offset in the rare occasion that the layer is distanced
         % from the others following the curvature
         if contains(tline,'; layer 1,')    
             firstLayerOffset = layer_ajustment;
