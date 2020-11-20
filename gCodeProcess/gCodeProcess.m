@@ -168,7 +168,7 @@ while ~feof(raw_gcode_file)
                 if all(current_norm == [0,0,0])
                     % creating unitary vector in the vertical direction if no normals exist
                     nextCoordNormals = [nextCoord(:,1) nextCoord(:,2) nextCoord(:,3)+1]; 
-                else   
+                else
                     % Copying the already existing current normal to the other interpolated points
                     tempNormsRepeated = repmat(current_norm,size(nextCoord,1),1);
                     nextCoordNormals = [nextCoord(:,1) nextCoord(:,2) nextCoord(:,3)] + tempNormsRepeated;                    
@@ -176,17 +176,6 @@ while ~feof(raw_gcode_file)
                 AbsCurvedNorms = curveXYZ(nextCoordNormals,R,curve_mode);
                 curvedCoord(:,4:6) = [AbsCurvedNorms(:,1)-curvedCoord(:,1), AbsCurvedNorms(:,2)-curvedCoord(:,2), AbsCurvedNorms(:,3)-curvedCoord(:,3)];
             end
-            
-            % Normals creation around Y axis
-%             if print_normals
-%                 curvedCoord(:,4:6) = [zeros(size(curvedCoord,1),1), zeros(size(curvedCoord,1),1), ones(size(curvedCoord,1),1)];
-%                 midCoord = [0, 0, R] .* ones(size(curvedCoord,1),3);
-%                 coord = [curvedCoord(:,1) zeros(size(curvedCoord,1),1) curvedCoord(:,3)];
-%                 normals = midCoord - coord;
-%                 for m = 1:size(curvedCoord,1)
-%                     curvedCoord(m,4:6) = normals(m,:)/norm(normals(m,:));
-%                 end
-%             end
             
             % Repositionning of the coordinates
             nextCoord = [nextCoord(:,1)+offset(1) nextCoord(:,2)+offset(2) nextCoord(:,3:end)+offset(3)]; % Offset flatten path to original position
